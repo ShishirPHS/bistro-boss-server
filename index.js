@@ -34,13 +34,13 @@ async function run() {
 
     // middlewares
     const verifyToken = (req, res, next) => {
-      console.log("inside verify token: ", req.headers.authorization);
+      // console.log("inside verify token: ", req.headers.authorization);
       if (!req.headers.authorization) {
         return res.status(401).send({ message: "unauthorized access" });
       }
 
       const token = req.headers.authorization.split(" ")[1];
-      console.log(token);
+      // console.log(token);
 
       if (!token) {
         return res.status(401).send({ message: "unauthorized access" });
@@ -138,6 +138,12 @@ async function run() {
     // menu related api
     app.get("/menu", async (req, res) => {
       const result = await menuCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.post("/menu", async (req, res) => {
+      const item = req.body;
+      const result = await menuCollection.insertOne(item);
       res.send(result);
     });
 
