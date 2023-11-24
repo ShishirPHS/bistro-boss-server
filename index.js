@@ -279,6 +279,43 @@ async function run() {
       res.send({ users, menuItems, orders, revenue });
     });
 
+    // using aggregate pipeline
+    app.get("/order-stats", async (req, res) => {
+      const result = await paymentCollection
+        .aggregate([
+          {
+            $unwind: "$menuItemIds",
+          },
+          {
+            $lookup: {
+              from: "menu",
+              let: { menuItemId: { $toObjectId: "$menuItemIds" } },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: { $eq: ["$_id", "$$menuItemId"] },
+                  },
+                },
+              ],
+              as: "menuItems",
+            },
+          },
+          {
+            $unwind: "$menuItems",
+          },
+          {
+            $group: {
+              _id: "$menuItems.category",
+              quantity: { $sum: 1 },
+              revenue: { $sum: "$menuItems.price" },
+            },
+          },
+        ])
+        .toArray();
+
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
